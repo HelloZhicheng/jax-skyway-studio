@@ -1,0 +1,32 @@
+{
+  "useMapWidget": false,
+  "generalSettings": {
+    "highlightColor": "",
+    "searchAreaSymbol": null,
+    "keepResultsWhenClosed": true,
+    "urlParametersEnabled": true,
+    "noResultsFoundText": "",
+    "noResultMsgStyleSettings": {
+      "fontFamily": "Avenir Next",
+      "fontBold": false,
+      "fontItalic": false,
+      "fontUnderline": false,
+      "fontStrike": false,
+      "fontColor": "var(--sys-color-surface-paper-text)",
+      "fontSize": "12px"
+    },
+    "promptTextMessage": "",
+    "promptTextMsgStyleSettings": {
+      "fontFamily": "Avenir Next",
+      "fontBold": false,
+      "fontItalic": false,
+      "fontUnderline": false,
+      "fontStrike": false,
+      "fontColor": "var(--sys-color-surface-paper-text)",
+      "fontSize": "12px"
+    }
+  },
+  "configInfo": {
+
+  }
+}

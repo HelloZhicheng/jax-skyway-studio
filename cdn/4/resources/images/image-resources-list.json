@@ -1,0 +1,28 @@
+{
+  "1787005478123": {
+    "originalName": "UF_Logo_white.png",
+    "fileName": "1787005478123.png",
+    "size": 8638,
+    "url": "${appResourceUrl}/images/widget_10/1787005478123.png",
+    "created": 1787005478123,
+    "resourcesPrefix": "images/widget_10",
+    "referredIds": [],
+    "originId": "1787005478123",
+    "fileFormat": "image/png",
+    "originalWidth": 700,
+    "originalHeight": 476
+  },
+  "1789341186743": {
+    "originalName": "monorail_icon1.png",
+    "fileName": "1789341186743.png",
+    "size": 6011,
+    "url": "${appResourceUrl}/images/widget_78/1789341186743.png",
+    "created": 1789341186743,
+    "resourcesPrefix": "images/widget_78",
+    "referredIds": [],
+    "originId": "1789341186743",
+    "fileFormat": "image/png",
+    "originalWidth": 240,
+    "originalHeight": 242
+  }
+}
