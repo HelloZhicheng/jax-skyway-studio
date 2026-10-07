@@ -1,0 +1,22 @@
+{
+  "name": "jax-legend",
+  "label": "JAX Legend",
+  "type": "widget",
+  "version": "1.21.0",
+  "exbVersion": "1.21.0",
+  "author": "Zhicheng Xu",
+  "description": "Context-aware map legend for visible thematic layers within the study area.",
+  "copyright": "",
+  "license": "http://www.apache.org/licenses/LICENSE-2.0",
+  "dependency": [
+    "jimu-arcgis"
+  ],
+  "properties": {},
+  "translatedLocales": [
+    "en"
+  ],
+  "defaultSize": {
+    "width": 180,
+    "height": 60
+  }
+}

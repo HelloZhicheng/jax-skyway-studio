@@ -1,0 +1,30 @@
+{
+  "name": "jax-reveal-delay",
+  "label": "JAX Reveal Delay",
+  "type": "widget",
+  "widgetType": "LAYOUT",
+  "version": "1.21.0",
+  "exbVersion": "1.21.0",
+  "author": "Zhicheng Xu",
+  "description": "Reveals the JAX analysis content after a study area has been defined.",
+  "copyright": "",
+  "license": "http://www.apache.org/licenses/LICENSE-2.0",
+  "properties": {
+    "hasEmbeddedLayout": true,
+    "hasBuilderSupportModule": true
+  },
+  "translatedLocales": [
+    "en"
+  ],
+  "layouts": [
+    {
+      "name": "DEFAULT",
+      "label": "Default",
+      "type": "FIXED"
+    }
+  ],
+  "defaultSize": {
+    "width": 360,
+    "height": 500
+  }
+}
