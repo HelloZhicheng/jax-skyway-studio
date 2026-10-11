@@ -1,0 +1,25 @@
+{
+  "name": "jax-v12-workspace-skin",
+  "label": "JaxTwin Workspace V1.2 Skin",
+  "type": "widget",
+  "version": "1.2.21",
+  "exbVersion": "1.21.0",
+  "author": "JaxTwin",
+  "description": "UI style only: no runtime toolbar rewriting or setting page.",
+  "copyright": "",
+  "license": "",
+  "properties": {
+    "hasConfig": false,
+    "hasSettingPage": false
+  },
+  "dependency": [
+    "jimu-arcgis"
+  ],
+  "translatedLocales": [
+    "en"
+  ],
+  "defaultSize": {
+    "width": 1,
+    "height": 1
+  }
+}
