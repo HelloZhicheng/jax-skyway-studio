@@ -1,0 +1,22 @@
+{
+  "name": "jax-metrics",
+  "label": "JAX Metrics",
+  "type": "widget",
+  "version": "1.21.0",
+  "exbVersion": "1.21.0",
+  "author": "Zhicheng Xu",
+  "description": "Unified metric selection and analysis result interface for JAX Twin.",
+  "copyright": "",
+  "license": "http://www.apache.org/licenses/LICENSE-2.0",
+  "dependency": [
+    "jimu-arcgis"
+  ],
+  "properties": {},
+  "translatedLocales": [
+    "en"
+  ],
+  "defaultSize": {
+    "width": 330,
+    "height": 105
+  }
+}

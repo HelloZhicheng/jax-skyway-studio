@@ -1,0 +1,24 @@
+{
+  "name": "jax-v12-basemap-gallery",
+  "label": "Basemap",
+  "type": "widget",
+  "version": "1.2.14",
+  "exbVersion": "1.21.0",
+  "author": "JaxTwin Workspace",
+  "description": "Read all available basemaps from the actual Experience Builder organization and Esri public vector gallery; compact cards and stable layout.",
+  "copyright": "",
+  "license": "",
+  "properties": {
+    "hasConfigInSettingPage": false
+  },
+  "dependency": [
+    "jimu-arcgis"
+  ],
+  "translatedLocales": [
+    "en"
+  ],
+  "defaultSize": {
+    "width": 340,
+    "height": 620
+  }
+}
