@@ -1,0 +1,19 @@
+{
+  "name": "jax-mobile-shell",
+  "label": "JaxTwin Mobile Shell",
+  "type": "widget",
+  "version": "1.0.0",
+  "exbVersion": "1.21.0",
+  "author": "JaxTwin",
+  "description": "Mobile-only responsive results shell reading JaxTwin shared events. No duplicate GIS calculations.",
+  "properties": {
+    "hasSettingPage": false
+  },
+  "translatedLocales": [
+    "en"
+  ],
+  "defaultSize": {
+    "width": 360,
+    "height": 80
+  }
+}
