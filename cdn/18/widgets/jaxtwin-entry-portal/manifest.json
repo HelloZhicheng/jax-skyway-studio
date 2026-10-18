@@ -1,0 +1,17 @@
+{
+  "name": "jaxtwin-entry-portal",
+  "label": "JaxTwin Welcome",
+  "type": "widget",
+  "version": "1.8.9.2",
+  "exbVersion": "1.21.0",
+  "author": "JaxTwin",
+  "description": "Minimal two-field entry portal with verified passwordless instructor email-link authentication (V8.9A.2)",
+  "properties": {},
+  "translatedLocales": [
+    "en"
+  ],
+  "defaultSize": {
+    "width": 350,
+    "height": 480
+  }
+}
