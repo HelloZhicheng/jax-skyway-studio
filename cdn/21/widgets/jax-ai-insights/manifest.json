@@ -1,0 +1,22 @@
+{
+  "name": "jax-ai-insights",
+  "label": "JAX AI Insights",
+  "type": "widget",
+  "version": "1.2.0",
+  "exbVersion": "1.14.0",
+  "author": "JaxTwin",
+  "description": "Integrated strengths, challenges and opportunities grounded in JaxTwin GIS metrics and map evidence; standalone widget.",
+  "dependency": [
+    "jimu-arcgis"
+  ],
+  "properties": {
+    "hasMap": true
+  },
+  "translatedLocales": [
+    "en"
+  ],
+  "defaultSize": {
+    "width": 440,
+    "height": 590
+  }
+}
