@@ -1,0 +1,22 @@
+{
+  "name": "jax-sea-level-rise",
+  "label": "Sea Level Rise",
+  "type": "widget",
+  "version": "1.2.31",
+  "exbVersion": "1.21.0",
+  "author": "JaxTwin",
+  "description": "3D NOAA Sea Level Rise scenarios with conservative, query-backed building screening and evidence highlights.",
+  "copyright": "NOAA Office for Coastal Management",
+  "license": "",
+  "properties": {
+    "hasConfigInSettingPage": false,
+    "hasSettingPage": false
+  },
+  "dependency": [
+    "jimu-arcgis"
+  ],
+  "defaultSize": {
+    "width": 330,
+    "height": 680
+  }
+}
