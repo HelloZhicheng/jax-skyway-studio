@@ -1,0 +1,20 @@
+{
+  "name": "jaxtwin-glb-import",
+  "label": "Design",
+  "type": "widget",
+  "version": "8.9.1.8",
+  "exbVersion": "1.21.0",
+  "author": "JaxTwin",
+  "description": "JaxTwin Design verified Save Cloud and public direct read-only share into 3D Scene",
+  "properties": {},
+  "translatedLocales": [
+    "en"
+  ],
+  "dependency": [
+    "jimu-arcgis"
+  ],
+  "defaultSize": {
+    "width": 325,
+    "height": 650
+  }
+}
