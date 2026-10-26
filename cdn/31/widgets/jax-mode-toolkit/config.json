@@ -1,0 +1,13 @@
+{
+  "tools2D": [
+    "widget_420",
+    "widget_421",
+    "widget_422"
+  ],
+  "tools3D": [
+    "widget_420",
+    "widget_419",
+    "widget_422",
+    "sea-level-rise"
+  ]
+}
