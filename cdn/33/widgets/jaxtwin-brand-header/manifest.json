@@ -1,0 +1,21 @@
+{
+  "name": "jaxtwin-brand-header",
+  "label": "JaxTwin Adaptive Header",
+  "type": "widget",
+  "version": "1.21.0",
+  "exbVersion": "1.21.0",
+  "author": "JaxTwin Studio",
+  "description": "Transparent single-widget adaptive JaxTwin header for 2D and 3D",
+  "copyright": "",
+  "license": "http://www.apache.org/licenses/LICENSE-2.0",
+  "properties": {
+    "hasConfig": false
+  },
+  "dependency": [
+    "jimu-arcgis"
+  ],
+  "defaultSize": {
+    "width": 255,
+    "height": 64
+  }
+}
