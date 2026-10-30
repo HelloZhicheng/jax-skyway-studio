@@ -1,6 +1,6 @@
 /**
  * JAXTWIN cloudflare-migration PREVIEW gateway.
- * Only PUBLIC READ actions; writes, admin, login and Review are not proxied.
+ * Public Share/Exhibition and authenticated instructor/Admin routes.
  * Uses Service Bindings on the PAGES PREVIEW environment:
  *   JAX_SHARE -> jaxtwin-share
  *   JAX_DISPLAY -> jaxtwin-display-area
@@ -90,6 +90,50 @@ export async function onRequest(context) {
       return json(rewrite(body),response.status);
     }
     return new Response(request.method==='HEAD'?null:response.body,{status:response.status,headers:response.headers});
+  }
+
+
+  if(resource==='admin') {
+    // Instructor API is a protected Pages -> Service Binding -> Admin Worker route.
+    // Never forward unverified client identity to the Admin Worker.
+    if(extra.length>1 || (extra.length===1 && extra[0]!=='review'))
+      return json({error:'NOT_FOUND'},404);
+    if(request.method!=='POST') return json({error:'POST_REQUIRED'},405);
+    if(request.headers.get('origin') && !allowedOrigin(url,request.headers.get('origin')))
+      return json({error:'CROSS_ORIGIN_DISABLED'},403);
+    if(!env.JAX_ADMIN || typeof env.JAX_ADMIN.fetch!=='function')
+      return json({error:'MISSING_ADMIN_SERVICE_BINDING'},503);
+    const review=extra[0]==='review';
+    const source=await request.text();
+    if(source.length>(review?500000:8192)) return json({error:'BODY_TOO_LARGE'},413);
+    let body;
+    try{body=JSON.parse(source)}catch{return json({error:'INVALID_JSON'},400)}
+    if(!body||typeof body!=='object'||Array.isArray(body))
+      return json({error:'OBJECT_REQUIRED'},400);
+    const actions=review
+      ? ['list','create_session','get','rename_session','delete_session','save_scene','delete_scene']
+      : ['whoami','list','view','schema_check'];
+    if(!actions.includes(body.action)) return json({error:'ADMIN_ACTION_NOT_ALLOWED'},403);
+    const headerJwt=request.headers.get('cf-access-jwt-assertion');
+    const cookies=request.headers.get('cookie')||'';
+    const cookieJwt=cookies.match(/(?:^|;\s*)CF_Authorization=([^;]+)/)?.[1]||'';
+    const jwt=headerJwt || (cookieJwt?decodeURIComponent(cookieJwt):'');
+    if(!jwt) return json({error:'CLOUDFLARE_ACCESS_REQUIRED'},403);
+    const target=new URL(review?'/review':'/','https://jaxtwin-admin.xzc0318.workers.dev');
+    let upstream;
+    try{
+      upstream=await env.JAX_ADMIN.fetch(new Request(target,{
+        method:'POST',
+        headers:{'content-type':'application/json','cf-access-jwt-assertion':jwt},
+        body:source
+      }));
+    }catch(e){
+      console.error('ADMIN_SERVICE_UNAVAILABLE',e);
+      return json({error:'ADMIN_SERVICE_UNAVAILABLE'},502);
+    }
+    let result;
+    try{result=await upstream.json()}catch{return json({error:'INVALID_ADMIN_RESPONSE'},502)}
+    return json(result,upstream.status);
   }
 
   if (!Object.prototype.hasOwnProperty.call(ROUTES,resource)) return json({error:'NOT_FOUND'},404);
