@@ -34,6 +34,60 @@ export async function onRequest(context) {
     return json({ok:true,mode:'PUBLIC_READ_ONLY_PREVIEW',binds:{
       share:!!env.JAX_SHARE,display:!!env.JAX_DISPLAY,exhibition:!!env.JAX_EXHIBITION
     },supabaseWritesUntouched:true});
+
+  // Same-origin Cloudflare backend routes. Keep old student identifiers
+  // (username + UF email) and let each Worker validate its own requests.
+  // This gateway never sends requests to Supabase.
+  const BACKENDS = {
+    guest: 'https://jaxtwin-guest.xzc0318.workers.dev',
+    display: 'https://jaxtwin-display-area.xzc0318.workers.dev',
+    review: 'https://jaxtwin-review.xzc0318.workers.dev'
+  };
+  if (Object.prototype.hasOwnProperty.call(BACKENDS, resource)) {
+    if (request.headers.get('origin') && !allowedOrigin(url,request.headers.get('origin')))
+      return json({error:'CROSS_ORIGIN_DISABLED'},403);
+    const destinations = {guest:'JAX_GUEST',display:'JAX_DISPLAY',review:'JAX_REVIEW'};
+    const binding = env[destinations[resource]];
+    // Direct route fallback avoids requiring new bindings just to read.
+    const base = BACKENDS[resource];
+    const path = resource==='guest' ? (
+      extra.length===0 ? '/guest' :
+      extra[0]==='_r2_download' ? '/_r2_download' :
+      ['_r2_upload','_r2_part','_r2_complete'].includes(extra[0]) ? '/'+extra.join('/') : null
+    ) : resource==='display' ? (extra.length===0?'/':null) :
+         (extra.length===0?'/':extra.length===1&&extra[0]==='instructor'?'/instructor':null);
+    if(path===null) return json({error:'NOT_FOUND'},404);
+    if(resource==='review' && path==='/instructor')
+      return json({error:'INSTRUCTOR_ACCESS_NOT_CONFIGURED'},403);
+    const upstreamUrl = new URL(path+url.search,base);
+    let payload;
+    if(['GET','HEAD','OPTIONS'].includes(request.method)){
+      payload = new Request(upstreamUrl,{method:request.method,headers:request.headers});
+    } else if(['POST','PUT'].includes(request.method)) {
+      payload = new Request(upstreamUrl,{method:request.method,headers:request.headers,body:request.body,duplex:'half'});
+    } else return json({error:'METHOD_NOT_ALLOWED'},405);
+    let response;
+    try {
+      response = binding?.fetch ? await binding.fetch(payload) : await fetch(payload);
+    } catch(e) {
+      console.error('CLOUDFLARE_BACKEND_ERROR',resource,e);
+      return json({error:'CLOUDFLARE_BACKEND_UNAVAILABLE',resource},502);
+    }
+    // Rewrite guest-generated upload/download URLs so the browser stays on Pages.
+    if(resource==='guest' && request.method==='POST' && response.headers.get('content-type')?.includes('json')){
+      let body;try{body=await response.json()}catch{return json({error:'INVALID_BACKEND_JSON'},502)}
+      const rewrite = value=>{
+        if(typeof value==='string' && value.startsWith(base+'/'))
+          return url.origin+'/_jax_cf/guest'+value.slice(base.length);
+        if(Array.isArray(value))return value.map(rewrite);
+        if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).map(([k,v])=>[k,rewrite(v)]));
+        return value;
+      };
+      return json(rewrite(body),response.status);
+    }
+    return new Response(request.method==='HEAD'?null:response.body,{status:response.status,headers:response.headers});
+  }
+
   if (!Object.prototype.hasOwnProperty.call(ROUTES,resource)) return json({error:'NOT_FOUND'},404);
   const route = ROUTES[resource];
   const service = env[route.binding];
