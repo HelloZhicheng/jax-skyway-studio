@@ -60,11 +60,15 @@ export async function onRequest(context) {
     if(resource==='review' && path==='/instructor')
       return json({error:'INSTRUCTOR_ACCESS_NOT_CONFIGURED'},403);
     const upstreamUrl = new URL(path+url.search,base);
+    const backendHeaders = new Headers();
+    for(const name of ['content-type','range','content-length'])
+      if(request.headers.has(name)) backendHeaders.set(name,request.headers.get(name));
+    // Do not forward browser cookies, spoofable identities, or Preview Origin to Workers.
     let payload;
     if(['GET','HEAD','OPTIONS'].includes(request.method)){
-      payload = new Request(upstreamUrl,{method:request.method,headers:request.headers});
+      payload = new Request(upstreamUrl,{method:request.method,headers:backendHeaders});
     } else if(['POST','PUT'].includes(request.method)) {
-      payload = new Request(upstreamUrl,{method:request.method,headers:request.headers,body:request.body,duplex:'half'});
+      payload = new Request(upstreamUrl,{method:request.method,headers:backendHeaders,body:request.body});
     } else return json({error:'METHOD_NOT_ALLOWED'},405);
     let response;
     try {
