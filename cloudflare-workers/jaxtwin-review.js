@@ -1,8 +1,8 @@
 /**
  * JAXTWIN Review — Cloudflare D1 staging (Supabase-free)
  *
- * IMPORTANT: Safe migration build. WRITES_ENABLED is false by design.
- * Only enable writes after Cloudflare D1 schema/data and BOTH access paths have
+ * Student writes are opt-in via JAXTWIN_REVIEW_WRITES_ENABLED=true.
+ * Only enable writes after Cloudflare D1 schema/data and student access have
  * been validated and the frontend has been updated. Instructor endpoint must be
  * protected by Cloudflare Access at the edge before enabling it.
  *
