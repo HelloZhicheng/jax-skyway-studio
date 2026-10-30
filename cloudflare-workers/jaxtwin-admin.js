@@ -44,12 +44,62 @@ function adminEmails(env) {
   const optional=String(env.ADMIN_EMAILS||'').split(',').map(v=>v.trim().toLowerCase()).filter(Boolean);
   return new Set([...PRIMARY_INSTRUCTORS,...optional]);
 }
-async function requireAdmin(ctx,env) {
+
+const DEFAULT_ACCESS_ISSUER = 'https://wispy-boat-2220.cloudflareaccess.com';
+let accessCertsCache = {issuer:'', expires:0, keys:[]};
+function decodeBase64Url(v) {
+  const normalized=v.replace(/-/g,'+').replace(/_/g,'/');
+  const binary=atob(normalized+'='.repeat((4-normalized.length%4)%4));
+  return Uint8Array.from(binary,c=>c.charCodeAt(0));
+}
+async function validatePagesAccessJwt(request,env) {
+  // Service bindings do not propagate ctx.access, so verify the signed Access JWT.
+  // Never trust an email header alone.
+  const jwt=request.headers.get('cf-access-jwt-assertion')||'';
+  if(jwt.length<100 || jwt.length>12000) return null;
+  const pieces=jwt.split('.');
+  if(pieces.length!==3) return null;
+  try {
+    const header=JSON.parse(new TextDecoder().decode(decodeBase64Url(pieces[0])));
+    const payload=JSON.parse(new TextDecoder().decode(decodeBase64Url(pieces[1])));
+    const issuer=String(env.CF_ACCESS_TEAM_DOMAIN||DEFAULT_ACCESS_ISSUER).replace(/\/+$/,'');
+    const time=Math.floor(Date.now()/1000);
+    if(header.alg!=='RS256'||!header.kid||payload.iss!==issuer||!payload.exp||
+       payload.exp<=time||payload.nbf&&payload.nbf>time||
+       payload.iat&&payload.iat>time+120) return null;
+    if(env.CF_ACCESS_AUD && !(Array.isArray(payload.aud)?payload.aud:[payload.aud]).includes(env.CF_ACCESS_AUD))
+      return null;
+    if(accessCertsCache.issuer!==issuer||accessCertsCache.expires<Date.now()){
+      const res=await fetch(issuer+'/cdn-cgi/access/certs');
+      if(!res.ok) return null;
+      const data=await res.json();
+      if(!Array.isArray(data.keys)) return null;
+      accessCertsCache={issuer,expires:Date.now()+300000,keys:data.keys};
+    }
+    const jwk=accessCertsCache.keys.find(k=>k.kid===header.kid && k.kty==='RSA');
+    if(!jwk) return null;
+    const key=await crypto.subtle.importKey('jwk',jwk,
+      {name:'RSASSA-PKCS1-v1_5',hash:'SHA-256'},false,['verify']);
+    const input=new TextEncoder().encode(pieces[0]+'.'+pieces[1]);
+    if(!await crypto.subtle.verify('RSASSA-PKCS1-v1_5',key,decodeBase64Url(pieces[2]),input))
+      return null;
+    return String(payload.email||'').trim().toLowerCase() || null;
+  }catch(e){
+    console.warn('Invalid Pages Access identity',String(e?.message||e));
+    return null;
+  }
+}
+
+async function requireAdmin(ctx,env,request) {
   // ctx.access is injected by Cloudflare only after successful Worker-level Access auth.
-  if (!ctx?.access) return null;
-  const identity=await ctx.access.getIdentity();
-  const email=String(identity?.email||'').trim().toLowerCase();
-  return adminEmails(env).has(email)?email:null;
+  let email=null;
+  if(ctx?.access){
+    const identity=await ctx.access.getIdentity();
+    email=String(identity?.email||'').trim().toLowerCase();
+  }else if(request){
+    email=await validatePagesAccessJwt(request,env);
+  }
+  return email && adminEmails(env).has(email) ? email : null;
 }
 function fileUrl(request,workspaceId,key) {
   const url=new URL(request.url);
@@ -252,7 +302,7 @@ export default {
     // No /file, /health, or other sensitive API is available without Access.
     // Cross-origin OPTIONS requires Access auth too. A same-origin proxy can be added at front-end cutover.
     try {
-      const email=await requireAdmin(ctx,env);
+      const email=await requireAdmin(ctx,env,request);
       if (!email) return respond(request,403,{error:'Cloudflare Access instructor authorization required'});
       if (request.method==='OPTIONS') return new Response(null,{status:204,headers:cors(request)});
       if (!env.DB || !env.MODELS) return respond(request,503,{error:'D1 DB / R2 MODELS bindings missing'});
