@@ -1,0 +1,22 @@
+{
+  "name": "jaxtwin-3d-analysis",
+  "label": "3D Analysis",
+  "type": "widget",
+  "version": "1.7.0",
+  "exbVersion": "1.21.0",
+  "author": "JaxTwin",
+  "description": "3D analysis toolkit with uniform sections and compact native-engine daylight/shadow cast controls, inline NOAA Sea Level Rise.",
+  "copyright": "",
+  "license": "",
+  "dependency": [
+    "jimu-arcgis"
+  ],
+  "properties": {},
+  "translatedLocales": [
+    "en"
+  ],
+  "defaultSize": {
+    "width": 340,
+    "height": 480
+  }
+}
