@@ -1,0 +1,65 @@
+name: Cloudflare connection check
+on:
+  push:
+    branches: [codex/cloudflare-connection-check]
+    paths: [.github/workflows/cloudflare-connection-check.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check Cloudflare access without changing resources
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json, os, re, sys, urllib.request, urllib.error
+          token = os.environ.get("CLOUDFLARE_API_TOKEN", "").strip()
+          account = os.environ.get("CLOUDFLARE_ACCOUNT_ID", "").strip()
+          if not token or not re.fullmatch(r"[0-9a-fA-F]{32}", account):
+              sys.exit("Missing token or invalid account ID in repository secrets.")
+          base = "https://api.cloudflare.com/client/v4/accounts/" + account
+          def get(path):
+              req = urllib.request.Request(base + path, headers={"Authorization": "Bearer " + token}, method="GET")
+              try:
+                  with urllib.request.urlopen(req, timeout=30) as response:
+                      data = json.load(response)
+              except urllib.error.HTTPError as exc:
+                  raise RuntimeError("Cloudflare HTTP " + str(exc.code)) from None
+              except Exception:
+                  raise RuntimeError("Cloudflare connection or response failed") from None
+              if not data.get("success"):
+                  codes = [e.get("code") for e in data.get("errors", [])]
+                  raise RuntimeError("Cloudflare API error codes: " + json.dumps(codes))
+              return data["result"]
+          report = {"mode": "read-only", "checks": {}}
+          failed = False
+          for label, path in [("Workers", "/workers/scripts"), ("D1", "/d1/database?per_page=100"), ("R2", "/r2/buckets?per_page=1000")]:
+              try:
+                  result = get(path)
+                  rows = result.get("buckets", []) if isinstance(result, dict) else result
+                  matches = []
+                  for row in rows:
+                      name = str(row.get("name") or row.get("id") or "")
+                      if not name.startswith(("jax", "JAX")):
+                          continue
+                      item = {"name": name}
+                      if label == "Workers":
+                          settings = get("/workers/scripts/" + urllib.parse.quote(name, safe="") + "/settings")
+                          item["bindings"] = [{"name": b.get("name"), "type": b.get("type")} for b in settings.get("bindings", [])]
+                      matches.append(item)
+                  report["checks"][label] = {"ok": True, "jax_resources": matches}
+              except RuntimeError as exc:
+                  failed = True
+                  report["checks"][label] = {"ok": False, "error": str(exc)}
+          output = json.dumps(report, indent=2)
+          print(output)
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as summary:
+              summary.write("## Cloudflare connection check\nRead-only API requests. No deployments or student data changes.\n\n```json\n" + output + "\n```\n")
+          sys.exit(1 if failed else 0)
+          PY
