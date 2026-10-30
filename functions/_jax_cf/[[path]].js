@@ -93,46 +93,72 @@ export async function onRequest(context) {
   }
 
 
+
   if(resource==='admin') {
-    // Instructor API is a protected Pages -> Service Binding -> Admin Worker route.
-    // Never forward unverified client identity to the Admin Worker.
-    if(extra.length>1 || (extra.length===1 && extra[0]!=='review'))
+    // Verify Cloudflare Access-signed identity in the Admin Worker.
+    // The Pages Service Binding does NOT transport ctx.access.
+    const review=extra.length===1 && extra[0]==='review';
+    const file=extra.length===1 && extra[0]==='file';
+    if(extra.length>1 || (extra.length===1 && !review && !file))
       return json({error:'NOT_FOUND'},404);
-    if(request.method!=='POST') return json({error:'POST_REQUIRED'},405);
+    if(file ? !['GET','HEAD'].includes(request.method) : request.method!=='POST')
+      return json({error:'METHOD_NOT_ALLOWED'},405);
     if(request.headers.get('origin') && !allowedOrigin(url,request.headers.get('origin')))
       return json({error:'CROSS_ORIGIN_DISABLED'},403);
     if(!env.JAX_ADMIN || typeof env.JAX_ADMIN.fetch!=='function')
       return json({error:'MISSING_ADMIN_SERVICE_BINDING'},503);
-    const review=extra[0]==='review';
-    const source=await request.text();
-    if(source.length>(review?500000:8192)) return json({error:'BODY_TOO_LARGE'},413);
-    let body;
-    try{body=JSON.parse(source)}catch{return json({error:'INVALID_JSON'},400)}
-    if(!body||typeof body!=='object'||Array.isArray(body))
-      return json({error:'OBJECT_REQUIRED'},400);
-    const actions=review
-      ? ['list','create_session','get','rename_session','delete_session','save_scene','delete_scene']
-      : ['whoami','list','view','schema_check'];
-    if(!actions.includes(body.action)) return json({error:'ADMIN_ACTION_NOT_ALLOWED'},403);
+    let source;
+    if(!file) {
+      source=await request.text();
+      if(source.length>(review?500000:8192)) return json({error:'BODY_TOO_LARGE'},413);
+      let body;
+      try{body=JSON.parse(source)}catch{return json({error:'INVALID_JSON'},400)}
+      if(!body||typeof body!=='object'||Array.isArray(body))
+        return json({error:'OBJECT_REQUIRED'},400);
+      const actions=review
+        ? ['list','create_session','get','rename_session','delete_session','save_scene','delete_scene']
+        : ['whoami','list','view','schema_check'];
+      if(!actions.includes(body.action)) return json({error:'ADMIN_ACTION_NOT_ALLOWED'},403);
+    }
     const headerJwt=request.headers.get('cf-access-jwt-assertion');
     const cookies=request.headers.get('cookie')||'';
     const cookieJwt=cookies.match(/(?:^|;\s*)CF_Authorization=([^;]+)/)?.[1]||'';
-    const jwt=headerJwt || (cookieJwt?decodeURIComponent(cookieJwt):'');
+    let jwt=headerJwt;
+    try{if(!jwt && cookieJwt) jwt=decodeURIComponent(cookieJwt);}catch{return json({error:'INVALID_ACCESS_COOKIE'},403)}
     if(!jwt) return json({error:'CLOUDFLARE_ACCESS_REQUIRED'},403);
-    const target=new URL(review?'/review':'/','https://jaxtwin-admin.xzc0318.workers.dev');
+    const origin='https://jaxtwin-admin.xzc0318.workers.dev';
+    const target=new URL(file?'/file'+url.search:review?'/review':'/',origin);
+    const headers=new Headers({'cf-access-jwt-assertion':jwt});
+    if(file && request.headers.get('range')) headers.set('range',request.headers.get('range'));
+    if(!file)headers.set('content-type','application/json');
     let upstream;
     try{
       upstream=await env.JAX_ADMIN.fetch(new Request(target,{
-        method:'POST',
-        headers:{'content-type':'application/json','cf-access-jwt-assertion':jwt},
-        body:source
+        method:request.method,headers,body:file?undefined:source
       }));
     }catch(e){
       console.error('ADMIN_SERVICE_UNAVAILABLE',e);
       return json({error:'ADMIN_SERVICE_UNAVAILABLE'},502);
     }
+    if(file) {
+      const h=new Headers(upstream.headers);
+      h.set('cache-control','private, no-store');
+      h.delete('set-cookie');
+      return new Response(request.method==='HEAD'?null:upstream.body,{status:upstream.status,headers:h});
+    }
     let result;
     try{result=await upstream.json()}catch{return json({error:'INVALID_ADMIN_RESPONSE'},502)}
+    if(upstream.ok) {
+      const rewrite=v=>{
+        if(typeof v==='string' && v.startsWith(origin+'/file?'))
+          return url.origin+'/_jax_cf/admin/file?'+v.slice((origin+'/file?').length);
+        if(Array.isArray(v)) return v.map(rewrite);
+        if(v && typeof v==='object')
+          return Object.fromEntries(Object.entries(v).map(([k,vv])=>[k,rewrite(vv)]));
+        return v;
+      };
+      result=rewrite(result);
+    }
     return json(result,upstream.status);
   }
 
