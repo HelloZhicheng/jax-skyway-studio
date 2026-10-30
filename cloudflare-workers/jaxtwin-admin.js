@@ -145,6 +145,105 @@ async function serveFile(request,env,url) {
   return new Response(request.method==='HEAD'?null:file.body,{status:partial?206:200,headers});
 }
 
+
+const REVIEW_MAX_BYTES = 500000;
+function reviewJson(value, fallback) {
+  if (value == null || value === '') return fallback;
+  if (typeof value !== 'string') return value;
+  try { return JSON.parse(value); } catch { return fallback; }
+}
+function reviewUuid(value) { return UUID.test(String(value || '')); }
+function reviewSceneValid(s) {
+  if (!s || !reviewUuid(s.id) || !s.camera || typeof s.camera !== 'object' || Array.isArray(s.camera)) return false;
+  if (!Array.isArray(s.marks) || s.marks.length > 350 || !Array.isArray(s.notes) || s.notes.length > 100) return false;
+  if (s.notes.some(n => typeof n?.text !== 'string' || n.text.length > 3000)) return false;
+  if (s.thumbnail && (typeof s.thumbnail !== 'string' || s.thumbnail.length > 130000 ||
+      !/^data:image\/jpeg;base64,/.test(s.thumbnail))) return false;
+  return JSON.stringify({camera:s.camera,marks:s.marks,notes:s.notes}).length <= 450000;
+}
+async function instructorReview(request,env,email) {
+  if (request.method !== 'POST') return respond(request,405,{error:'POST only'});
+  if (!env.DB) return respond(request,503,{error:'D1 DB binding missing'});
+  const raw=await request.text();
+  if (enc.encode(raw).length > REVIEW_MAX_BYTES) return respond(request,413,{error:'Review request too large'});
+  let body;
+  try { body=JSON.parse(raw); } catch { return respond(request,400,{error:'Invalid JSON'}); }
+  if (!body || typeof body!=='object' || Array.isArray(body)) return respond(request,400,{error:'JSON object required'});
+  const action=String(body.action||'');
+  if (!['list','create_session','get','rename_session','delete_session','save_scene','delete_scene'].includes(action))
+    return respond(request,400,{error:'Unsupported Review action'});
+  const workspaceId=String(body.workspaceId||'');
+  if (!reviewUuid(workspaceId)) return respond(request,400,{error:'Invalid Workspace ID'});
+  const workspace=await env.DB.prepare('SELECT id FROM jaxtwin_workspaces WHERE id=?').bind(workspaceId).first();
+  if (!workspace) return respond(request,404,{error:'Workspace not found'});
+  if (action==='list') {
+    const results=await env.DB.prepare(
+      'SELECT id,workspace_id,title,created_at,updated_at FROM jaxtwin_review_sessions WHERE workspace_id=? ORDER BY created_at DESC LIMIT 100'
+    ).bind(workspaceId).all();
+    return respond(request,200,{sessions:results.results||[]});
+  }
+  if(action==='create_session') {
+    const now=new Date().toISOString(), id=crypto.randomUUID(), title=String(body.title||'').trim().slice(0,120)||now.slice(0,10)+' · Review';
+    await env.DB.prepare('INSERT INTO jaxtwin_review_sessions (id,workspace_id,title,created_at,updated_at) VALUES (?,?,?,?,?)')
+      .bind(id,workspaceId,title,now,now).run();
+    return respond(request,200,{session:{id,workspace_id:workspaceId,title,created_at:now,updated_at:now}});
+  }
+  const sessionId=String(body.sessionId||'');
+  if (!reviewUuid(sessionId)) return respond(request,400,{error:'Invalid Review Session'});
+  const current=await env.DB.prepare('SELECT id FROM jaxtwin_review_sessions WHERE id=? AND workspace_id=?')
+    .bind(sessionId,workspaceId).first();
+  if (!current) return respond(request,404,{error:'Review Session not found'});
+  if (action==='get') {
+    const result=await env.DB.prepare(
+      'SELECT id,session_id,camera,marks,notes,thumbnail,updated_at FROM jaxtwin_review_scenes WHERE session_id=? ORDER BY created_at ASC LIMIT 200'
+    ).bind(sessionId).all();
+    const scenes=(result.results||[]).map(r=>({
+      id:r.id,session_id:r.session_id,camera:reviewJson(r.camera,{}),
+      marks:reviewJson(r.marks,[]),notes:reviewJson(r.notes,[]),
+      thumbnail:r.thumbnail||'',updated_at:r.updated_at
+    }));
+    return respond(request,200,{scenes});
+  }
+  if (action==='rename_session') {
+    const title=String(body.title||'').trim().slice(0,120);
+    if (!title) return respond(request,400,{error:'Review name cannot be empty'});
+    const now=new Date().toISOString();
+    await env.DB.prepare('UPDATE jaxtwin_review_sessions SET title=?,updated_at=? WHERE id=? AND workspace_id=?')
+      .bind(title,now,sessionId,workspaceId).run();
+    const session=await env.DB.prepare('SELECT id,workspace_id,title,created_at,updated_at FROM jaxtwin_review_sessions WHERE id=?')
+      .bind(sessionId).first();
+    return respond(request,200,{session});
+  }
+  if (action==='delete_session') {
+    await env.DB.batch([
+      env.DB.prepare('DELETE FROM jaxtwin_review_scenes WHERE session_id=?').bind(sessionId),
+      env.DB.prepare('DELETE FROM jaxtwin_review_sessions WHERE id=? AND workspace_id=?').bind(sessionId,workspaceId)
+    ]);
+    return respond(request,200,{ok:true});
+  }
+  if (action==='save_scene') {
+    const s=body.scene;
+    if (!reviewSceneValid(s)) return respond(request,400,{error:'Invalid or oversized Review Scene'});
+    const existing=await env.DB.prepare('SELECT session_id FROM jaxtwin_review_scenes WHERE id=?').bind(s.id).first();
+    if (existing && existing.session_id!==sessionId) return respond(request,409,{error:'Review Scene belongs to another Session'});
+    const now=new Date().toISOString();
+    await env.DB.prepare(`INSERT INTO jaxtwin_review_scenes
+      (id,session_id,camera,marks,notes,thumbnail,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?)
+      ON CONFLICT(id) DO UPDATE SET camera=excluded.camera,marks=excluded.marks,
+        notes=excluded.notes,thumbnail=excluded.thumbnail,updated_at=excluded.updated_at
+      WHERE jaxtwin_review_scenes.session_id=excluded.session_id`)
+      .bind(s.id,sessionId,JSON.stringify(s.camera),JSON.stringify(s.marks),JSON.stringify(s.notes),s.thumbnail||'',now,now).run();
+    return respond(request,200,{ok:true});
+  }
+  if (action==='delete_scene') {
+    const sceneId=String(body.sceneId||'');
+    if (!reviewUuid(sceneId)) return respond(request,400,{error:'Invalid Review Scene ID'});
+    await env.DB.prepare('DELETE FROM jaxtwin_review_scenes WHERE id=? AND session_id=?').bind(sceneId,sessionId).run();
+    return respond(request,200,{ok:true});
+  }
+  return respond(request,400,{error:'Unsupported Review action'});
+}
+
 export default {
   async fetch(request,env,ctx) {
     const url=new URL(request.url);
@@ -161,6 +260,7 @@ export default {
         return respond(request,200,{ok:true,service:'jaxtwin-admin',mode:'cloudflare-only / read-only',
           d1Bound:true,r2Bound:true,authProvider:'Cloudflare Access',authenticatedEmail:email,
           supabaseRequired:false,deleteEnabled:false});
+      if (url.pathname==='/review') return instructorReview(request,env,email);
       if (url.pathname==='/file' && (request.method==='GET'||request.method==='HEAD'))
         return await serveFile(request,env,url);
       if (url.pathname!=='/' || request.method!=='POST') return respond(request,405,{error:'POST only'});
