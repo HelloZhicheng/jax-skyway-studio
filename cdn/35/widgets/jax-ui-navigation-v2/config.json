@@ -1,0 +1,5 @@
+{
+ "twoDSourceId":"", "threeDSourceId":"", "initialMode":"2d",
+ "explore2d":"", "analysis2d":"", "explore3d":"", "analysis3d":"", "design3d":"", "review3d":"",
+ "layers2d":"", "layers3d":"", "basemap2d":"", "basemap3d":"", "tools3d":"", "export2d":"", "export3d":""
+}
