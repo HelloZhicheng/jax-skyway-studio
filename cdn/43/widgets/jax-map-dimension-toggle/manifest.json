@@ -1,0 +1,23 @@
+{
+  "name": "jax-map-dimension-toggle",
+  "label": "JaxTwin 2D / 3D Switcher",
+  "type": "widget",
+  "version": "4.1.0",
+  "exbVersion": "1.21.0",
+  "author": "JaxTwin",
+  "description": "Bottom-left 2D/3D/Realistic control; global data-source selection; optional one-click binding to an existing Map Widget.",
+  "properties": {},
+  "dependency": [
+    "jimu-arcgis"
+  ],
+  "settingDependency": [
+    "jimu-arcgis"
+  ],
+  "translatedLocales": [
+    "en"
+  ],
+  "defaultSize": {
+    "width": 255,
+    "height": 44
+  }
+}
