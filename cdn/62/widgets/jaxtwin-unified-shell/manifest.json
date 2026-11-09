@@ -1,0 +1,23 @@
+{
+  "name": "jaxtwin-unified-shell",
+  "label": "JaxTwin Unified Studio",
+  "version": "1.3.0",
+  "type": "widget",
+  "exbVersion": "1.21.0",
+  "author": "JaxTwin",
+  "description": "JaxTwin Studio workspace shell with exploration, analysis, design, review and a student-authored interactive Experience Studio.",
+  "license": "",
+  "properties": {
+    "hasConfigInSettingPage": true
+  },
+  "dependency": [
+    "jimu-arcgis"
+  ],
+  "translatedLocales": [
+    "en"
+  ],
+  "defaultSize": {
+    "width": 560,
+    "height": 720
+  }
+}
