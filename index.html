@@ -59,7 +59,7 @@
   const icon = '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 3h14a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H9l-6 4V5a2 2 0 0 1 2-2Z"/><path d="M7 8h10M7 12h7"/></svg>'
   let owner = false, authVersion = 0, authAbort, trigger, railButton, formDialog, inbox, previousFocus
   let draft = { name: '', workedWell: '', improvements: '', otherComments: '' }
-  let submissionId = '', sending = false, pageCursor = null, listLoading = false
+  let submissionId = '', sending = false, pageCursor = null, listLoading = false, listAbort
   const style = document.createElement('style')
   style.id = 'jax-platform-feedback-style'
   style.textContent = `
@@ -197,6 +197,7 @@
     close.focus()
   }
   function closeInbox() {
+    listAbort?.abort(); listAbort = null; listLoading = false
     inbox?.remove(); inbox = null; pageCursor = null
     document.body.classList.remove('jtf-inbox-open')
     railButton?.setAttribute('aria-pressed', 'false')
@@ -204,10 +205,11 @@
   async function loadEntries(append) {
     if (listLoading || !inbox) return
     listLoading = true
+    const controller = new AbortController(); listAbort = controller
     const target = inbox, state = target.querySelector('.jtf-list-state'), more = target.querySelector('.jtf-more')
     state.textContent = 'Loading feedback…'; more.disabled = true
     try {
-      const result = await api({ action: 'list', cursor: append ? pageCursor : null })
+      const result = await api({ action: 'list', cursor: append ? pageCursor : null }, controller.signal)
       if (!owner || inbox !== target) return
       const entries = target.querySelector('.jtf-entries')
       if (!append) entries.replaceChildren()
@@ -225,7 +227,7 @@
       if (inbox !== target) return
       if (error.status === 403) { owner = false; closeInbox(); railButton?.remove(); railButton = null; return }
       state.textContent = 'Could not load feedback. Please try again.'; more.hidden = false; more.textContent = 'Retry'; more.onclick = () => { void loadEntries(append) }
-    } finally { listLoading = false; more.disabled = false }
+    } finally { if (listAbort === controller) { listLoading = false; listAbort = null }; more.disabled = false }
   }
   function openInbox() {
     if (!owner) return
