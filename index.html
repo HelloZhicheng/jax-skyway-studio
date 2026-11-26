@@ -327,7 +327,38 @@
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true })
   else start()
-})();</script></head><body><div id="loading"><style>.loading-content{
+})();</script><script id="jaxtwin-mobile-entry">
+/* Runs before Experience Builder starts. Keep desktop initialization unchanged. */
+(function () {
+  var mobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent || '') ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var url = new URL(location.href);
+  if (url.searchParams.get('desktop') === '1') return;
+  if (!mobile && url.searchParams.get('mobile') !== '1') return;
+  if (url.hostname === 'jaxtwin.pages.dev' && /^(\/|\/index.html)$/.test(url.pathname)) {
+    url.hostname = 'mobile.jaxtwin.pages.dev';
+    url.searchParams.set('mobile', '1');
+    location.replace(url.href);
+    return;
+  }
+  if (!/^mobile(?:[-.]|$)/i.test(url.hostname)) return;
+  // Configure one renderer before ExB starts. Hidden second views retained the
+  // full scene even when the user only browsed the phone's 2D map.
+  var sceneRoute = ['share', 'exhibition', 'jaxboard', 'jaxboardscene', 'jaxboardexperience', 'jaxexperience', 'experience', 'jaxscene', 'student', 'admin']
+    .some(function (key) { return url.searchParams.has(key); });
+  var customConfig=url.searchParams.get('config');
+  if(customConfig&&!/^mobile-map-(2d|3d)\.json$/.test(customConfig))return;
+  var requested=url.searchParams.get('phoneView');
+  var dimension=sceneRoute?'3d':requested==='2d'||requested==='3d'?requested:url.hash.includes('active_datasource_id:dataSource_15')?'3d':'2d';
+  url.searchParams.set('config','mobile-map-'+dimension+'.json');
+  url.searchParams.set('phoneView',dimension);
+  var parts=url.hash.replace(/^#/,'').split('&').filter(function(part){return part&&!part.startsWith('widget_435=');});
+  parts.push('widget_435=active_datasource_id:'+(dimension==='3d'?'dataSource_15':'dataSource_7'));
+  url.hash=parts.join('&');
+  history.replaceState(history.state,'',url.href);
+})();
+</script>
+</head><body><div id="loading"><style>.loading-content{
           position: absolute;
           top: 0;
           bottom: 0;
