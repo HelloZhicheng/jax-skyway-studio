@@ -48,6 +48,231 @@
     url.hash = url.hash ? url.hash + '&widget_435=active_datasource_id:dataSource_7' : 'widget_435=active_datasource_id:dataSource_7';
     history.replaceState(history.state, '', url.href);
   }
+})();</script><script id="jaxtwin-platform-feedback">/* Shared enhancement for existing desktop exports and the mobile Exhibition.
+ * Keep this file browser-native: release packaging also embeds it in index.html.
+ * No project/model capture, inferred student identity, or browser draft storage.
+ */
+;(function () {
+  if (typeof window === 'undefined' || window.__jaxPlatformFeedbackInstalled) return
+  window.__jaxPlatformFeedbackInstalled = true
+  const OWNER = 'zhicheng.xu@ufl.edu'
+  const icon = '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 3h14a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H9l-6 4V5a2 2 0 0 1 2-2Z"/><path d="M7 8h10M7 12h7"/></svg>'
+  let owner = false, authVersion = 0, authAbort, trigger, railButton, formDialog, inbox, previousFocus
+  let draft = { name: '', workedWell: '', improvements: '', otherComments: '' }
+  let submissionId = '', sending = false, pageCursor = null, listLoading = false
+  const style = document.createElement('style')
+  style.id = 'jax-platform-feedback-style'
+  style.textContent = `
+    .jtf-trigger{position:fixed;right:10px;z-index:10030;display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 11px;border:1px solid #cbd9dc;border-radius:10px;background:#f7fbfa;color:#173f44;font:600 calc(12px * var(--jt-mobile-font-scale,1))/1.2 Arial,sans-serif;box-shadow:0 2px 8px #162f3612;cursor:pointer}
+    .jtf-trigger svg{width:16px;height:16px;flex:none}
+    .jtf-dialog{box-sizing:border-box;width:min(420px,calc(100vw - 20px));max-width:none;max-height:calc(100dvh - 24px - env(safe-area-inset-top));margin:auto;padding:0;border:1px solid #cbd9dc;border-radius:18px;background:#f7fbfa;color:#203a40;box-shadow:0 16px 56px #0004;font:14px/1.45 Arial,sans-serif;overflow:auto;overscroll-behavior:contain;z-index:2147483000}
+    .jtf-dialog::backdrop{background:#10232980}
+    .jtf-dialog *,.jtf-inbox *{box-sizing:border-box}
+    .jtf-dialog button,.jtf-inbox button{font:inherit;cursor:pointer}
+    .jtf-dialog header,.jtf-inbox header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px;border-bottom:1px solid #d8e2e3}
+    .jtf-dialog h2,.jtf-inbox h2{margin:0;color:inherit;font:600 17px/1.3 Arial,sans-serif}
+    .jtf-close{display:grid;place-items:center;flex:none;width:36px;height:36px;padding:0;border:1px solid #cbd9dc;border-radius:9px;background:transparent;color:inherit}
+    .jtf-close svg{width:18px;height:18px}
+    .jtf-fields{display:grid;gap:13px;padding:16px}
+    .jtf-intro{margin:0;color:#526e75;font-size:13px;line-height:1.45}
+    .jtf-fields label{display:grid;gap:5px;margin:0;color:inherit;font-size:13px;font-weight:600}
+    .jtf-fields label span{font-weight:400;color:#587179}
+    .jtf-fields label .jtf-field-label{font-weight:600;color:inherit}
+    .jtf-fields input,.jtf-fields textarea{display:block;width:100%;margin:0;padding:9px 10px;border:1px solid #c5d5d9;border-radius:9px;background:#fff;color:#203a40;font:16px/1.35 Arial,sans-serif}
+    .jtf-fields textarea{min-height:66px;resize:vertical;max-height:150px}
+    .jtf-fields input{height:40px}
+    .jtf-fields input::placeholder,.jtf-fields textarea::placeholder{color:#657c83;opacity:1}
+    .jtf-fields .jtf-honey{display:none}
+    .jtf-private{margin:0;color:#587179;font-size:12px}
+    .jtf-actions{position:sticky;bottom:0;display:flex;justify-content:flex-end;padding:12px 16px calc(12px + env(safe-area-inset-bottom));border-top:1px solid #d8e2e3;background:#f7fbfa}
+    .jtf-primary{min-height:42px;padding:9px 17px;border:0;border-radius:9px;background:#173f44;color:#fff;font-weight:600!important}
+    .jtf-primary:disabled{opacity:.55;cursor:wait}
+    .jtf-status{margin:0;color:#a22e46;font-size:13px}
+    .jtf-success{padding:25px 20px;display:grid;gap:13px;text-align:center}
+    .jtf-success p{margin:0;color:#526e75}
+    .jtf-inbox{position:fixed;z-index:11000;left:64px;top:0;bottom:0;width:min(440px,calc(100vw - 64px));display:flex;flex-direction:column;background:#f6f8f9;color:#203a40;box-shadow:4px 0 16px #0001;font:14px/1.5 Arial,sans-serif;pointer-events:auto}
+    body.jtf-inbox-open .jt-studio-panel{visibility:hidden!important;pointer-events:none!important}
+    .jtf-inbox .jtf-inbox-scroll{min-height:0;overflow:auto;padding:16px;overscroll-behavior:contain}
+    .jtf-inbox-intro{margin:0 0 16px;color:#587179;font-size:13px}
+    .jtf-entry{padding:16px 0;border-top:1px solid #d5dfe2}
+    .jtf-entry h3{margin:0;font:600 14px/1.4 Arial,sans-serif}
+    .jtf-entry time{display:block;margin:2px 0 12px;color:#587179;font-size:12px}
+    .jtf-entry h4{margin:12px 0 3px;font:600 12px/1.4 Arial,sans-serif;color:#4e6870}
+    .jtf-entry p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+    .jtf-inbox .jtf-list-state{color:#526e75}
+    .jtf-more{min-height:38px;margin-top:14px;border:1px solid #c5d5d9;border-radius:8px;background:transparent;color:inherit;padding:7px 12px}
+    .jtf-dialog :focus-visible,.jtf-trigger:focus-visible,.jtf-inbox :focus-visible{outline:2px solid #287f84;outline-offset:3px}
+    @media(max-width:600px){.jtf-dialog{margin:auto auto 10px;max-height:calc(100dvh - 24px - env(safe-area-inset-top))}.jtf-dialog header{padding:12px 14px}.jtf-fields{padding:13px 14px;gap:11px}.jtf-dialog h2{font-size:16px}.jtf-inbox{left:0;width:100%}}
+  `
+  ;(document.head || document.documentElement).appendChild(style)
+  const closeIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>'
+  function el(tag, text, className) {
+    const node = document.createElement(tag)
+    if (text !== undefined) node.textContent = text
+    if (className) node.className = className
+    return node
+  }
+  function readSession() {
+    try { return JSON.parse(sessionStorage.getItem('jaxtwin:access:v89a') || 'null') } catch { return null }
+  }
+  async function api(data, signal) {
+    const headers = { 'content-type': 'application/json' }
+    // Local development may carry the Access assertion returned by the bridge.
+    // Production uses the HttpOnly same-origin Access cookie through the gateway.
+    const access = data.action !== 'submit' ? readSession()?.accessToken : ''
+    if (typeof access === 'string' && access.startsWith('cf-access:')) headers.authorization = 'Bearer ' + access.slice(10)
+    const controller = new AbortController()
+    const cancel = () => controller.abort()
+    if (signal?.aborted) controller.abort()
+    else signal?.addEventListener('abort', cancel, { once: true })
+    const timer = setTimeout(cancel, 20000)
+    try {
+      const response = await fetch('/_jax_feedback', { method: 'POST', credentials: 'same-origin', headers, signal: controller.signal, body: JSON.stringify(data) })
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok) throw Object.assign(new Error(result.error || 'Feedback is temporarily unavailable. Please try again.'), { status: response.status })
+      return result
+    } finally { clearTimeout(timer); signal?.removeEventListener('abort', cancel) }
+  }
+  function closeForm() {
+    if (sending) return
+    formDialog?.close()
+    previousFocus?.focus?.()
+  }
+  function openForm() {
+    if (formDialog?.open) return
+    previousFocus = document.activeElement
+    if (!formDialog) {
+      formDialog = el('dialog', undefined, 'jtf-dialog')
+      formDialog.setAttribute('aria-labelledby', 'jtf-form-title')
+      formDialog.addEventListener('cancel', event => { event.preventDefault(); closeForm() })
+      document.body.appendChild(formDialog)
+    }
+    formDialog.replaceChildren()
+    const header = el('header'), title = el('h2', 'Leave feedback')
+    title.id = 'jtf-form-title'
+    const close = el('button', undefined, 'jtf-close'); close.type = 'button'; close.setAttribute('aria-label', 'Close platform feedback'); close.innerHTML = closeIcon; close.onclick = closeForm
+    header.append(title, close)
+    const form = el('form'), fields = el('div', undefined, 'jtf-fields')
+    fields.appendChild(el('p', 'Share your experience using JaxTwin.', 'jtf-intro'))
+    const inputs = []
+    for (const [key, label, placeholder] of [
+      ['name', 'Name', 'Leave blank to stay anonymous'],
+      ['workedWell', 'What worked well?', 'Features or experiences you found useful'],
+      ['improvements', 'What could be improved?', 'Difficulties, missing features, or suggestions'],
+      ['otherComments', 'Anything else?', 'Any other thoughts (optional)']
+    ]) {
+      const row = el('label'), heading = el('span', label, 'jtf-field-label')
+      if (key === 'name') heading.appendChild(el('span', ' (optional)'))
+      row.appendChild(heading)
+      const input = el(key === 'name' ? 'input' : 'textarea')
+      input.name = key; input.value = draft[key]; input.placeholder = placeholder; input.maxLength = key === 'name' ? 100 : 2000
+      if (key === 'name') { input.type = 'text'; input.autocomplete = 'off' }
+      else input.rows = 2
+      input.oninput = () => { draft[key] = input.value; status.textContent = '' }
+      row.appendChild(input); fields.appendChild(row); inputs.push(input)
+    }
+    const honey = el('input'); honey.name = 'website'; honey.className = 'jtf-honey'; honey.tabIndex = -1; honey.autocomplete = 'off'; honey.setAttribute('aria-hidden', 'true'); fields.appendChild(honey)
+    fields.appendChild(el('p', 'Private to the course instructor. Leave your name blank to stay anonymous.', 'jtf-private'))
+    const status = el('p', '', 'jtf-status'); status.setAttribute('role', 'alert'); fields.appendChild(status)
+    const actions = el('div', undefined, 'jtf-actions'), submit = el('button', 'Submit feedback', 'jtf-primary'); submit.type = 'submit'; actions.appendChild(submit)
+    form.append(fields, actions)
+    form.onsubmit = async event => {
+      event.preventDefault()
+      if (sending) return
+      if (![draft.workedWell, draft.improvements, draft.otherComments].some(value => value.trim())) { status.textContent = 'Please share at least one comment.'; inputs[1].focus(); return }
+      if (!submissionId) submissionId = crypto.randomUUID()
+      sending = true; submit.disabled = true; close.disabled = true; inputs.forEach(input => { input.disabled = true }); submit.textContent = 'Submitting…'; status.textContent = ''
+      try {
+        await api({ action: 'submit', id: submissionId, ...draft, website: honey.value })
+        draft = { name: '', workedWell: '', improvements: '', otherComments: '' }; submissionId = ''
+        const success = el('div', undefined, 'jtf-success'); success.setAttribute('role', 'status')
+        success.append(el('h2', 'Thank you!'), el('p', 'Your feedback has been submitted.'))
+        const done = el('button', 'Done', 'jtf-primary'); done.type = 'button'; done.onclick = closeForm; success.appendChild(done)
+        form.replaceWith(success); done.focus()
+      } catch (error) { status.textContent = error.name === 'AbortError' ? 'Could not confirm submission. Your draft is still here; please retry.' : error.message }
+      finally { sending = false; submit.disabled = false; close.disabled = false; inputs.forEach(input => { input.disabled = false }); submit.textContent = 'Submit feedback' }
+    }
+    formDialog.append(header, form); formDialog.showModal()
+    // Start at the heading rather than opening the mobile keyboard immediately.
+    close.focus()
+  }
+  function closeInbox() {
+    inbox?.remove(); inbox = null; pageCursor = null
+    document.body.classList.remove('jtf-inbox-open')
+    railButton?.setAttribute('aria-pressed', 'false')
+  }
+  async function loadEntries(append) {
+    if (listLoading || !inbox) return
+    listLoading = true
+    const target = inbox, state = target.querySelector('.jtf-list-state'), more = target.querySelector('.jtf-more')
+    state.textContent = 'Loading feedback…'; more.disabled = true
+    try {
+      const result = await api({ action: 'list', cursor: append ? pageCursor : null })
+      if (!owner || inbox !== target) return
+      const entries = target.querySelector('.jtf-entries')
+      if (!append) entries.replaceChildren()
+      for (const entry of result.entries || []) {
+        const article = el('article', undefined, 'jtf-entry'), name = el('h3', entry.name || 'Anonymous'), time = el('time')
+        time.dateTime = entry.createdAt; time.textContent = new Date(entry.createdAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })
+        article.append(name, time)
+        for (const [key, label] of [['workedWell', 'What worked well'], ['improvements', 'What could be improved'], ['otherComments', 'Other comments']]) if (entry[key]) article.append(el('h4', label), el('p', entry[key]))
+        entries.appendChild(article)
+      }
+      pageCursor = result.nextCursor
+      more.hidden = !pageCursor; more.textContent = 'Load more'; more.onclick = () => { void loadEntries(true) }
+      state.textContent = entries.childElementCount ? '' : 'No platform feedback yet.'
+    } catch (error) {
+      if (inbox !== target) return
+      if (error.status === 403) { owner = false; closeInbox(); railButton?.remove(); railButton = null; return }
+      state.textContent = 'Could not load feedback. Please try again.'; more.hidden = false; more.textContent = 'Retry'; more.onclick = () => { void loadEntries(append) }
+    } finally { listLoading = false; more.disabled = false }
+  }
+  function openInbox() {
+    if (!owner) return
+    if (inbox) { closeInbox(); return }
+    inbox = el('aside', undefined, 'jtf-inbox'); inbox.setAttribute('aria-label', 'Platform feedback inbox')
+    const header = el('header'), close = el('button', undefined, 'jtf-close'); close.type = 'button'; close.innerHTML = closeIcon; close.setAttribute('aria-label', 'Close feedback inbox'); close.onclick = closeInbox
+    header.append(el('h2', 'Feedback'), close)
+    const scroll = el('div', undefined, 'jtf-inbox-scroll')
+    const state = el('p', '', 'jtf-list-state'); state.setAttribute('role', 'status')
+    const more = el('button', 'Load more', 'jtf-more'); more.type = 'button'; more.hidden = true
+    scroll.append(el('p', 'Private platform feedback · Newest first', 'jtf-inbox-intro'), el('div', undefined, 'jtf-entries'), state, more)
+    inbox.append(header, scroll); document.body.appendChild(inbox); document.body.classList.add('jtf-inbox-open'); railButton?.setAttribute('aria-pressed', 'true'); close.focus(); void loadEntries(false)
+  }
+  function attach() {
+    const header = document.querySelector('.jax-exhibition-mobile-header')
+    if (header) {
+      if (!trigger) { trigger = el('button', undefined, 'jtf-trigger'); trigger.type = 'button'; trigger.innerHTML = icon + '<span>Leave feedback</span>'; trigger.setAttribute('aria-label', 'Leave platform feedback'); trigger.onclick = openForm; document.body.appendChild(trigger) }
+      trigger.style.top = Math.max(0, header.getBoundingClientRect().bottom + 8) + 'px'
+    } else if (trigger) { trigger.remove(); trigger = null }
+    const nav = document.querySelector('.jt-studio-nav')
+    if (owner && nav && !document.body.classList.contains('jt-mobile-product')) {
+      if (!railButton?.isConnected) { railButton = el('button', undefined, 'jt-studio-nav-item jtf-rail-button'); railButton.type = 'button'; railButton.innerHTML = icon + '<span>Feedback</span>'; railButton.title = 'Feedback'; railButton.setAttribute('aria-label', 'Feedback'); railButton.setAttribute('aria-pressed', 'false'); railButton.onclick = openInbox; nav.appendChild(railButton) }
+    } else if (railButton) { closeInbox(); railButton.remove(); railButton = null }
+  }
+  async function verifyOwner() {
+    const version = ++authVersion
+    authAbort?.abort(); authAbort = new AbortController(); owner = false; closeInbox(); railButton?.remove(); railButton = null
+    const session = readSession()
+    if (session?.role !== 'instructor' || String(session.email || '').toLowerCase() !== OWNER) return
+    try { const result = await api({ action: 'owner' }, authAbort.signal); if (version === authVersion) { owner = result.owner === true; attach() } } catch { /* Private navigation stays absent if verification fails. */ }
+  }
+  function start() {
+    let scheduled = false
+    const observer = new MutationObserver(() => { if (!scheduled) { scheduled = true; setTimeout(() => { scheduled = false; attach() }, 120) } })
+    const observe = () => { observer.observe(document.body, { childList: true, subtree: true }); attach(); void verifyOwner() }
+    observer.observe(document.body, { childList: true, subtree: true })
+    window.addEventListener('resize', attach)
+    window.addEventListener('jaxtwin:access-changed', verifyOwner)
+    window.addEventListener('jaxtwin:access-change', verifyOwner)
+    document.addEventListener('click', event => { if (inbox && event.target.closest?.('.jt-studio-rail button:not(.jtf-rail-button)')) closeInbox() })
+    document.addEventListener('keydown', event => { if (event.key === 'Escape' && inbox) closeInbox() })
+    window.addEventListener('pagehide', () => { observer.disconnect(); authAbort?.abort() }, { once: true })
+    window.addEventListener('pageshow', event => { if (event.persisted) observe() })
+    attach(); void verifyOwner()
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true })
+  else start()
 })();</script></head><body><div id="loading"><style>.loading-content{
           position: absolute;
           top: 0;
