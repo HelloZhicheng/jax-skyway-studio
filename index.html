@@ -26,7 +26,29 @@
 				position: relative;
 				z-index: 0;
 				display: none;
-			}</style></head><body><div id="loading"><style>.loading-content{
+			}</style><script id="jaxtwin-mobile-entry">/* Runs before Experience Builder starts. Keep desktop initialization unchanged. */
+(function () {
+  var mobile = /iPhone|iPad|iPod|Android|Mobile/i.test(navigator.userAgent || '') ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var url = new URL(location.href);
+  if (url.searchParams.get('desktop') === '1') return;
+  if (!mobile && url.searchParams.get('mobile') !== '1') return;
+  if (url.hostname === 'jaxtwin.pages.dev' && /^(\/|\/index.html)$/.test(url.pathname)) {
+    url.hostname = 'mobile.jaxtwin.pages.dev';
+    url.searchParams.set('mobile', '1');
+    location.replace(url.href);
+    return;
+  }
+  if (!/^mobile(?:[-.]|$)/i.test(url.hostname)) return;
+  // Exhibition/shared work needs 3D. Ordinary city browsing starts in 2D;
+  // an explicit 2D/3D map hash from a visitor's link always wins.
+  var sceneRoute = ['share', 'exhibition', 'jaxboard', 'jaxboardscene', 'jaxboardexperience', 'jaxexperience', 'experience', 'jaxscene', 'student', 'admin']
+    .some(function (key) { return url.searchParams.has(key); });
+  if (!sceneRoute && !url.hash.includes('active_datasource_id:')) {
+    url.hash = url.hash ? url.hash + '&widget_435=active_datasource_id:dataSource_7' : 'widget_435=active_datasource_id:dataSource_7';
+    history.replaceState(history.state, '', url.href);
+  }
+})();</script></head><body><div id="loading"><style>.loading-content{
           position: absolute;
           top: 0;
           bottom: 0;
