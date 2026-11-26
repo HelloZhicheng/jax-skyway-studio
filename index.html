@@ -63,8 +63,7 @@
   const style = document.createElement('style')
   style.id = 'jax-platform-feedback-style'
   style.textContent = `
-    .jtf-trigger{position:fixed;right:10px;z-index:10030;display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 11px;border:1px solid #cbd9dc;border-radius:10px;background:#f7fbfa;color:#173f44;font:600 calc(12px * var(--jt-mobile-font-scale,1))/1.2 Arial,sans-serif;box-shadow:0 2px 8px #162f3612;cursor:pointer}
-    .jtf-trigger svg{width:16px;height:16px;flex:none}
+    .jt-mobile-more-menu .jtf-trigger svg{width:18px;height:18px;flex:none}
     .jtf-dialog{box-sizing:border-box;width:min(420px,calc(100vw - 20px));max-width:none;max-height:calc(100dvh - 24px - env(safe-area-inset-top));margin:auto;padding:0;border:1px solid #cbd9dc;border-radius:18px;background:#f7fbfa;color:#203a40;box-shadow:0 16px 56px #0004;font:14px/1.45 Arial,sans-serif;overflow:auto;overscroll-behavior:contain;z-index:2147483000}
     .jtf-dialog::backdrop{background:#10232980}
     .jtf-dialog *,.jtf-inbox *{box-sizing:border-box}
@@ -83,7 +82,6 @@
     .jtf-fields input{height:40px}
     .jtf-fields input::placeholder,.jtf-fields textarea::placeholder{color:#657c83;opacity:1}
     .jtf-fields .jtf-honey{display:none}
-    .jtf-private{margin:0;color:#587179;font-size:12px}
     .jtf-actions{position:sticky;bottom:0;display:flex;justify-content:flex-end;padding:12px 16px calc(12px + env(safe-area-inset-bottom));border-top:1px solid #d8e2e3;background:#f7fbfa}
     .jtf-primary{min-height:42px;padding:9px 17px;border:0;border-radius:9px;background:#173f44;color:#fff;font-weight:600!important}
     .jtf-primary:disabled{opacity:.55;cursor:wait}
@@ -172,7 +170,6 @@
       row.appendChild(input); fields.appendChild(row); inputs.push(input)
     }
     const honey = el('input'); honey.name = 'website'; honey.className = 'jtf-honey'; honey.tabIndex = -1; honey.autocomplete = 'off'; honey.setAttribute('aria-hidden', 'true'); fields.appendChild(honey)
-    fields.appendChild(el('p', 'Private to the course instructor. Leave your name blank to stay anonymous.', 'jtf-private'))
     const status = el('p', '', 'jtf-status'); status.setAttribute('role', 'alert'); fields.appendChild(status)
     const actions = el('div', undefined, 'jtf-actions'), submit = el('button', 'Submit feedback', 'jtf-primary'); submit.type = 'submit'; actions.appendChild(submit)
     form.append(fields, actions)
@@ -242,10 +239,18 @@
     inbox.append(header, scroll); document.body.appendChild(inbox); document.body.classList.add('jtf-inbox-open'); railButton?.setAttribute('aria-pressed', 'true'); close.focus(); void loadEntries(false)
   }
   function attach() {
-    const header = document.querySelector('.jax-exhibition-mobile-header')
-    if (header) {
-      if (!trigger) { trigger = el('button', undefined, 'jtf-trigger'); trigger.type = 'button'; trigger.innerHTML = icon + '<span>Leave feedback</span>'; trigger.setAttribute('aria-label', 'Leave platform feedback'); trigger.onclick = openForm; document.body.appendChild(trigger) }
-      trigger.style.top = Math.max(0, header.getBoundingClientRect().bottom + 8) + 'px'
+    const menu = document.querySelector('.jt-mobile-more-menu')
+    if (menu) {
+      if (!trigger?.isConnected) {
+        trigger = el('button', undefined, 'jtf-trigger'); trigger.type = 'button'; trigger.innerHTML = icon + '<span>Leave feedback</span>'
+        trigger.setAttribute('role', 'menuitem'); trigger.setAttribute('aria-label', 'Leave feedback')
+        trigger.onclick = () => {
+          const toggle = document.querySelector('.jt-mobile-more-toggle')
+          toggle?.focus(); toggle?.click()
+          openForm()
+        }
+        menu.appendChild(trigger)
+      }
     } else if (trigger) { trigger.remove(); trigger = null }
     const nav = document.querySelector('.jt-studio-nav')
     if (owner && nav && !document.body.classList.contains('jt-mobile-product')) {
