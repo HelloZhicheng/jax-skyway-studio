@@ -1,6 +1,9 @@
-
 {
   "version": 1,
-  "include": ["/_jax_cf/*"],
+  "include": [
+    "/_jax_cf/*",
+    "/_jax_feedback",
+    "/_jax_feedback/*"
+  ],
   "exclude": []
 }
